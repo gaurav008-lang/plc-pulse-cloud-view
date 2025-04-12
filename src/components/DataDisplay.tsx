@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { AreaChart } from "@/components/ui/chart";
+import { AreaChart as RechartsAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface PLCData {
   timestamp: string;
@@ -93,17 +93,18 @@ const DataDisplay: React.FC<DataDisplayProps> = ({
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[200px] py-4">
-                <AreaChart 
-                  data={chartData}
-                  index="name"
-                  categories={["value"]}
-                  colors={["#2563eb"]}
-                  valueFormatter={(value) => value === 1 ? "ON" : "OFF"}
-                  showLegend={false}
-                  showXAxis={true}
-                  showYAxis={true}
-                  yAxisWidth={30}
-                />
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsAreaChart
+                    data={chartData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 1]} ticks={[0, 1]} tickFormatter={(value) => value === 1 ? "ON" : "OFF"} />
+                    <Tooltip formatter={(value) => [(value === 1 ? "ON" : "OFF")]} />
+                    <Area type="monotone" dataKey="value" stroke="#2563eb" fill="#3b82f6" />
+                  </RechartsAreaChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
