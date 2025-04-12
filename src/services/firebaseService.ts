@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, connectionsRef } from "firebase/database";
+import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp } from "firebase/database";
 import { toast } from "sonner";
 
 interface PLCData {
