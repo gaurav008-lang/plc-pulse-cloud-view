@@ -8,6 +8,22 @@ interface PLCData {
   value: boolean;
 }
 
+export interface PLCConfig {
+  modbusType: 'tcp' | 'rtu';
+  ipAddress?: string;
+  port?: number;
+  comPort?: string;
+  baudRate?: number;
+  dataBits?: number;
+  parity?: string;
+  stopBits?: number;
+  coilAddress: number;
+  unitId: number;
+  enableLogging: boolean;
+  createdAt?: number;
+  id?: string;
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyByNDDxXK_plHoZUHVGT6HQQTuMti1rckc", 
   authDomain: "plcwebapp.firebaseapp.com",
@@ -107,6 +123,68 @@ class FirebaseService {
   
   get connectionStatus() {
     return this.isConnected;
+  }
+
+  // New method to save PLC configuration
+  savePLCConfig(config: PLCConfig): Promise<string> {
+    if (!this.initialized) {
+      console.warn("Firebase not initialized, skipping config save");
+      return Promise.reject("Firebase not initialized");
+    }
+
+    try {
+      // Generate a unique ID if not provided
+      const configId = config.id || `config_${new Date().getTime()}`;
+      const configWithTimestamp = {
+        ...config,
+        createdAt: config.createdAt || new Date().getTime(),
+        id: configId
+      };
+      
+      // Save to Firebase
+      const configRef = ref(this.db, `plcConfigs/${configId}`);
+      return set(configRef, configWithTimestamp)
+        .then(() => {
+          console.log("PLC configuration saved to Firebase:", configWithTimestamp);
+          toast.success("PLC configuration saved to Firebase");
+          return configId;
+        })
+        .catch((error) => {
+          console.error("Error saving PLC config:", error);
+          toast.error("Failed to save PLC configuration");
+          throw error;
+        });
+    } catch (error) {
+      console.error("Firebase save error:", error);
+      toast.error("Failed to save PLC configuration");
+      return Promise.reject(error);
+    }
+  }
+
+  // Method to get saved PLC configurations
+  getSavedPLCConfigs(callback: (configs: PLCConfig[]) => void) {
+    if (!this.initialized) {
+      console.warn("Firebase not initialized, cannot get saved configs");
+      return () => {};
+    }
+
+    const configsRef = ref(this.db, 'plcConfigs');
+    const unsubscribe = onValue(configsRef, (snapshot) => {
+      const data = snapshot.val();
+      const configs: PLCConfig[] = [];
+      
+      if (data) {
+        Object.keys(data).forEach(key => {
+          configs.push(data[key]);
+        });
+        // Sort by created date, newest first
+        configs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      }
+      
+      callback(configs);
+    });
+
+    return unsubscribe;
   }
 }
 

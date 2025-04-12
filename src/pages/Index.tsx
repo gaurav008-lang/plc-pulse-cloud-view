@@ -179,6 +179,7 @@ const Index = () => {
                   isConnected={isConnected}
                   historicalDataCount={historicalData.length}
                   enableLogging={plcConfig?.enableLogging}
+                  plcConfig={plcConfig}
                 />
               </TabsContent>
             </Tabs>
