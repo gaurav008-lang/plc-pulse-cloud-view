@@ -40,6 +40,7 @@ class FirebaseService {
   private initialized = false;
   private connectionStatusListeners: ((status: boolean) => void)[] = [];
   private isConnected = false;
+  private connectionInterval: number | null = null;
 
   initialize() {
     try {
@@ -54,11 +55,40 @@ class FirebaseService {
         this.isConnected = snap.val() === true;
         console.log("Firebase connection state:", this.isConnected ? "connected" : "disconnected");
         this.notifyConnectionListeners(this.isConnected);
+        
+        // Show toast only after the first connection is established
+        if (this.isConnected) {
+          toast.success("Connected to Firebase cloud storage");
+        } else {
+          toast.error("Disconnected from Firebase cloud storage");
+        }
       });
+      
+      // Set up a heartbeat to check connection status periodically
+      this.connectionInterval = window.setInterval(() => {
+        const heartbeatRef = ref(this.db, '.info/serverTimeOffset');
+        onValue(heartbeatRef, 
+          (snap) => {
+            const offset = snap.val() || 0;
+            console.log(`Firebase server time offset: ${offset}ms`);
+          },
+          (error) => {
+            console.error("Error getting server time offset:", error);
+            this.notifyConnectionListeners(false);
+          }
+        );
+      }, 30000) as unknown as number;
       
     } catch (error) {
       console.error("Firebase initialization error:", error);
       toast.error("Failed to initialize Firebase");
+    }
+  }
+
+  cleanup() {
+    if (this.connectionInterval) {
+      window.clearInterval(this.connectionInterval);
+      this.connectionInterval = null;
     }
   }
 
@@ -125,7 +155,7 @@ class FirebaseService {
     return this.isConnected;
   }
 
-  // New method to save PLC configuration
+  // Save PLC configuration
   savePLCConfig(config: PLCConfig): Promise<string> {
     if (!this.initialized) {
       console.warn("Firebase not initialized, skipping config save");
@@ -146,22 +176,19 @@ class FirebaseService {
       return set(configRef, configWithTimestamp)
         .then(() => {
           console.log("PLC configuration saved to Firebase:", configWithTimestamp);
-          toast.success("PLC configuration saved to Firebase");
           return configId;
         })
         .catch((error) => {
           console.error("Error saving PLC config:", error);
-          toast.error("Failed to save PLC configuration");
           throw error;
         });
     } catch (error) {
       console.error("Firebase save error:", error);
-      toast.error("Failed to save PLC configuration");
       return Promise.reject(error);
     }
   }
 
-  // Method to get saved PLC configurations
+  // Get saved PLC configurations
   getSavedPLCConfigs(callback: (configs: PLCConfig[]) => void) {
     if (!this.initialized) {
       console.warn("Firebase not initialized, cannot get saved configs");
