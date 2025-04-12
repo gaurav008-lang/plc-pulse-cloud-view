@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings, Cpu, Database, Info } from "lucide-react";
+import { Settings, Cpu, Database } from "lucide-react";
 import PLCConfigForm, { PLCConfig } from "@/components/PLCConfigForm";
 import DataDisplay from "@/components/DataDisplay";
+import CloudStorage from "@/components/CloudStorage";
 import { socketService } from "@/services/socketService";
 import { firebaseService } from "@/services/firebaseService";
 
@@ -175,44 +175,11 @@ const Index = () => {
               </TabsContent>
               
               <TabsContent value="cloud">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Cloud Storage</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isConnected ? (
-                      <div className="space-y-4">
-                        <div className="rounded-md bg-gray-50 p-4 border">
-                          <h4 className="font-medium mb-2">Firebase Status</h4>
-                          <p className="flex items-center">
-                            <span className="status-indicator status-connected"></span>
-                            Data is being uploaded to Firebase
-                          </p>
-                        </div>
-                        
-                        <div>
-                          <h4 className="font-medium mb-2">Uploaded Data Points</h4>
-                          <p className="text-2xl font-bold text-plc-blue">{historicalData.length}</p>
-                        </div>
-                        
-                        {plcConfig?.enableLogging && (
-                          <div>
-                            <h4 className="font-medium mb-2">CSV Logging</h4>
-                            <p className="flex items-center">
-                              <span className="status-indicator status-connected"></span>
-                              Data is being logged to CSV
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-6 text-gray-500">
-                        <Database className="mx-auto h-12 w-12 mb-2 opacity-30" />
-                        <p>Connect to a PLC to start uploading data</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <CloudStorage 
+                  isConnected={isConnected}
+                  historicalDataCount={historicalData.length}
+                  enableLogging={plcConfig?.enableLogging}
+                />
               </TabsContent>
             </Tabs>
           </div>

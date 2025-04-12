@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue } from "firebase/database";
+import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, connectionsRef } from "firebase/database";
 import { toast } from "sonner";
 
 interface PLCData {
@@ -23,6 +23,7 @@ class FirebaseService {
   private app: any;
   private db: any;
   private initialized = false;
+  private connectionStatusListeners: ((status: boolean) => void)[] = [];
 
   initialize() {
     try {
@@ -30,6 +31,15 @@ class FirebaseService {
       this.db = getDatabase(this.app);
       this.initialized = true;
       console.log("Firebase initialized successfully");
+      
+      // Monitor connection state
+      const connectedRef = ref(this.db, '.info/connected');
+      onValue(connectedRef, (snap) => {
+        const connected = snap.val() === true;
+        console.log("Firebase connection state:", connected ? "connected" : "disconnected");
+        this.notifyConnectionListeners(connected);
+      });
+      
     } catch (error) {
       console.error("Firebase initialization error:", error);
       toast.error("Failed to initialize Firebase");
@@ -72,6 +82,35 @@ class FirebaseService {
     });
 
     return unsubscribe;
+  }
+
+  addConnectionStatusListener(listener: (status: boolean) => void) {
+    this.connectionStatusListeners.push(listener);
+    
+    // Immediately notify with current status if known
+    if (this.initialized) {
+      // Force a check by trying to access the database
+      const connectedRef = ref(this.db, '.info/connected');
+      onValue(connectedRef, (snap) => {
+        listener(snap.val() === true);
+      }, { onlyOnce: true });
+    } else {
+      listener(false);
+    }
+    
+    return () => {
+      this.connectionStatusListeners = this.connectionStatusListeners.filter(l => l !== listener);
+    };
+  }
+  
+  private notifyConnectionListeners(status: boolean) {
+    this.connectionStatusListeners.forEach(listener => {
+      listener(status);
+    });
+  }
+  
+  get isInitialized() {
+    return this.initialized;
   }
 }
 

@@ -1,14 +1,23 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plc-pulse-cloud-view</title>
-    <meta name="description" content="Lovable Generated Project" />
+    <title>PLC Pulse Cloud View</title>
+    <meta name="description" content="Real-time PLC monitoring dashboard" />
     <meta name="author" content="Lovable" />
+    <meta name="theme-color" content="#0077B6" />
 
-    <meta property="og:title" content="plc-pulse-cloud-view" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="PLC Pulse" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
+    <meta property="og:title" content="PLC Pulse Cloud View" />
+    <meta property="og:description" content="Real-time PLC monitoring dashboard" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
@@ -22,5 +31,20 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('Service worker registered: ', registration);
+            })
+            .catch(error => {
+              console.log('Service worker registration failed: ', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
