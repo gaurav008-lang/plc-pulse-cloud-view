@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Database, CheckCircle, XCircle } from "lucide-react";
+import { Database, CheckCircle, XCircle, Wifi, WifiOff } from "lucide-react";
 import { firebaseService } from "@/services/firebaseService";
 
 interface CloudStorageProps {
@@ -14,12 +14,17 @@ const CloudStorage: React.FC<CloudStorageProps> = ({ isConnected, historicalData
   const [firebaseConnected, setFirebaseConnected] = useState<boolean>(false);
   
   useEffect(() => {
+    console.log("CloudStorage: Setting up Firebase connection listener");
     // Subscribe to Firebase connection status
     const unsubscribe = firebaseService.addConnectionStatusListener((status) => {
+      console.log("CloudStorage: Firebase connection status changed to:", status);
       setFirebaseConnected(status);
     });
     
-    return () => unsubscribe();
+    return () => {
+      console.log("CloudStorage: Cleaning up Firebase connection listener");
+      unsubscribe();
+    };
   }, []);
   
   return (
@@ -31,17 +36,17 @@ const CloudStorage: React.FC<CloudStorageProps> = ({ isConnected, historicalData
         {isConnected ? (
           <div className="space-y-4">
             <div className="rounded-md bg-gray-50 p-4 border">
-              <h4 className="font-medium mb-2">Firebase Status</h4>
+              <h4 className="font-medium mb-2">Firebase Connection Status</h4>
               <p className="flex items-center gap-2">
                 {firebaseConnected ? (
                   <>
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-green-700">Connected to Firebase</span>
+                    <Wifi className="h-5 w-5 text-green-500" />
+                    <span className="text-green-700 font-medium">Connected to Firebase</span>
                   </>
                 ) : (
                   <>
-                    <XCircle className="h-5 w-5 text-red-500" />
-                    <span className="text-red-700">Disconnected from Firebase</span>
+                    <WifiOff className="h-5 w-5 text-red-500" />
+                    <span className="text-red-700 font-medium">Disconnected from Firebase</span>
                   </>
                 )}
               </p>

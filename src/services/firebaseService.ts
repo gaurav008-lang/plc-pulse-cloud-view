@@ -9,7 +9,6 @@ interface PLCData {
 }
 
 const firebaseConfig = {
-
   apiKey: "AIzaSyByNDDxXK_plHoZUHVGT6HQQTuMti1rckc", 
   authDomain: "plcwebapp.firebaseapp.com",
   databaseURL: "https://plcwebapp-default-rtdb.firebaseio.com",
@@ -24,6 +23,7 @@ class FirebaseService {
   private db: any;
   private initialized = false;
   private connectionStatusListeners: ((status: boolean) => void)[] = [];
+  private isConnected = false;
 
   initialize() {
     try {
@@ -35,9 +35,9 @@ class FirebaseService {
       // Monitor connection state
       const connectedRef = ref(this.db, '.info/connected');
       onValue(connectedRef, (snap) => {
-        const connected = snap.val() === true;
-        console.log("Firebase connection state:", connected ? "connected" : "disconnected");
-        this.notifyConnectionListeners(connected);
+        this.isConnected = snap.val() === true;
+        console.log("Firebase connection state:", this.isConnected ? "connected" : "disconnected");
+        this.notifyConnectionListeners(this.isConnected);
       });
       
     } catch (error) {
@@ -87,16 +87,8 @@ class FirebaseService {
   addConnectionStatusListener(listener: (status: boolean) => void) {
     this.connectionStatusListeners.push(listener);
     
-    // Immediately notify with current status if known
-    if (this.initialized) {
-      // Force a check by trying to access the database
-      const connectedRef = ref(this.db, '.info/connected');
-      onValue(connectedRef, (snap) => {
-        listener(snap.val() === true);
-      }, { onlyOnce: true });
-    } else {
-      listener(false);
-    }
+    // Immediately notify with current status
+    listener(this.isConnected);
     
     return () => {
       this.connectionStatusListeners = this.connectionStatusListeners.filter(l => l !== listener);
@@ -111,6 +103,10 @@ class FirebaseService {
   
   get isInitialized() {
     return this.initialized;
+  }
+  
+  get connectionStatus() {
+    return this.isConnected;
   }
 }
 
