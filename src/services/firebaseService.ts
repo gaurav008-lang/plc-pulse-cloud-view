@@ -9,14 +9,14 @@ interface PLCData {
 }
 
 const firebaseConfig = {
-  // This will need to be replaced with actual Firebase credentials
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+
+  apiKey: "AIzaSyByNDDxXK_plHoZUHVGT6HQQTuMti1rckc", 
+  authDomain: "plcwebapp.firebaseapp.com",
+  databaseURL: "https://plcwebapp-default-rtdb.firebaseio.com",
+  projectId: "plcwebapp",
+  storageBucket: "plcwebapp.firebasestorage.app",
+  messagingSenderId: "424899404299",
+  appId: "1:424899404299:web:640112c4531b145674dd0e"
 };
 
 class FirebaseService {
