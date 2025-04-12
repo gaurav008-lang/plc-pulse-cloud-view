@@ -1,73 +1,78 @@
-# Welcome to your Lovable project
 
-## Project info
+# PLC Pulse Cloud View
 
-**URL**: https://lovable.dev/projects/14210fb6-e1cf-4f0d-8d22-6ab6cb3ebd02
+A real-time PLC data monitoring web application that connects to PLCs via Modbus TCP/RTU, displays live data, and uploads it to a cloud backend.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Connect to PLCs using Modbus TCP or RTU protocols
+- Web-based configuration of PLC connection parameters
+- Real-time data monitoring and visualization
+- Cloud integration with Firebase Realtime Database
+- CSV data logging for record-keeping
 
-**Use Lovable**
+## Technical Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/14210fb6-e1cf-4f0d-8d22-6ab6cb3ebd02) and start prompting.
+### Frontend
+- React with TypeScript
+- Tailwind CSS
+- Socket.IO client for real-time communication
+- Firebase integration for cloud storage
 
-Changes made via Lovable will be committed automatically to this repo.
+### Backend
+- Flask Python server
+- Pymodbus for Modbus TCP/RTU communication
+- Socket.IO server for real-time updates
+- CSV logging functionality
 
-**Use your preferred IDE**
+## Setup Instructions
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
+- Node.js (16+)
+- Python (3.8+)
+- PLC with Modbus TCP/RTU capability
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Frontend Setup
+1. Install dependencies:
+   ```
+   npm install
+   ```
+2. Update Firebase configuration in `src/services/firebaseService.ts` with your Firebase credentials
+3. Build the frontend:
+   ```
+   npm run build
+   ```
 
-Follow these steps:
+### Backend Setup
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
+2. Install Python dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Run the Flask server:
+   ```
+   python app.py
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Usage
+1. Open a web browser and navigate to `http://localhost:5000`
+2. Configure your PLC connection parameters
+3. Click "Connect to PLC" to establish a connection
+4. View real-time data on the monitoring dashboard
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Docker Deployment
+A Dockerfile is included for containerized deployment:
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+docker build -t plc-pulse-cloud-view ./backend
+docker run -p 5000:5000 plc-pulse-cloud-view
 ```
 
-**Edit a file directly in GitHub**
+## Notes
+- To connect to a PLC, ensure the device is accessible from the machine running the backend server
+- For Modbus RTU connections, appropriate hardware (like a USB-to-Serial adapter) may be required
+- CSV logs are stored in the `backend/logs` directory
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/14210fb6-e1cf-4f0d-8d22-6ab6cb3ebd02) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
