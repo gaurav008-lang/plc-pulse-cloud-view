@@ -25,7 +25,7 @@ export interface PLCConfig {
 }
 
 const firebaseConfig = {
-  apiKey: "", 
+  apiKey: "AIzaSyByNDDxXK_plHoZUHVGT6HQQTuMti1rckc", 
   authDomain: "plcwebapp.firebaseapp.com",
   databaseURL: "https://plcwebapp-default-rtdb.firebaseio.com",
   projectId: "plcwebapp",
