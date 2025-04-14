@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import { generateOTP, emailService } from '@/services/emailService';
 import { firebaseService } from '@/services/firebaseService';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -35,7 +34,6 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize Firebase at component mount
     const app = firebaseService.initialize();
     if (app) {
       console.log("Firebase initialized in Login component");
@@ -59,7 +57,6 @@ const Login = () => {
     },
   });
 
-  // Reset OTP form when switching to OTP step
   useEffect(() => {
     if (step === "otp") {
       otpForm.reset();
@@ -70,42 +67,32 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      // Generate a 6-digit OTP
       const otp = generateOTP();
       console.log("Generated OTP:", otp);
-      
-      // Save form values to state
+
       setGeneratedOTP(otp);
       setUserName(values.name);
       setUserEmail(values.email);
-      
-      // Make sure Firebase is initialized
+
       firebaseService.initialize();
-      
-      console.log("Attempting to save OTP to Firebase:", values.email, otp);
-      
-      // Save OTP to Firebase
+
       await firebaseService.saveOTP(values.email, otp);
-      
-      console.log("OTP saved successfully, now sending email");
-      
-      // Send OTP to admin email
+      console.log("OTP saved, sending email");
+
       const emailResult = await emailService.sendOTPToAdmin({
         userName: values.name,
         userEmail: values.email,
         otp: otp,
         adminEmail: ADMIN_EMAIL
       });
-      
-      console.log("Email sending result:", emailResult);
-      
+
       if (emailResult) {
         toast.success("Access request sent to administrator");
-        setStep("otp");  // Move to OTP input step
+        setStep("otp");
       } else {
         toast.error("Failed to send access request. Please try again.");
       }
-      
+
     } catch (error) {
       console.error("Error in handleRequestAccess:", error);
       toast.error("Failed to process your request. Please try again.");
@@ -116,12 +103,11 @@ const Login = () => {
 
   const handleVerifyOTP = async (values: z.infer<typeof otpSchema>) => {
     setIsLoading(true);
-    
+
     try {
       console.log("Verifying OTP:", values.otp, "for email:", userEmail);
       const isValid = await firebaseService.verifyOTP(userEmail, values.otp);
-      console.log("OTP verification result:", isValid);
-      
+
       if (isValid) {
         localStorage.setItem('authUser', JSON.stringify({
           email: userEmail,
@@ -129,7 +115,7 @@ const Login = () => {
           isAdmin: userEmail === ADMIN_EMAIL,
           loginTime: new Date().toString()
         }));
-        
+
         toast.success("Login successful! Welcome to PLC Pulse");
         navigate("/");
       } else {
@@ -154,7 +140,7 @@ const Login = () => {
               : "Enter the OTP provided by the administrator"}
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {step === "details" ? (
             <Form {...detailsForm}>
@@ -201,7 +187,7 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <Button 
                   type="submit" 
                   className="w-full" 
@@ -219,7 +205,7 @@ const Login = () => {
           ) : (
             <Form {...otpForm}>
               <form onSubmit={otpForm.handleSubmit(handleVerifyOTP)} className="space-y-4">
-                <FormField
+                <Controller
                   control={otpForm.control}
                   name="otp"
                   render={({ field }) => (
@@ -228,11 +214,8 @@ const Login = () => {
                       <FormControl>
                         <InputOTP 
                           maxLength={6} 
-                          value={field.value} 
-                          onChange={(value) => {
-                            console.log("OTP input changed:", value);
-                            field.onChange(value);
-                          }}
+                          value={field.value}
+                          onChange={field.onChange}
                         >
                           <InputOTPGroup>
                             <InputOTPSlot index={0} />
@@ -248,14 +231,14 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md border border-blue-100 mb-4">
                   <p className="flex items-center">
                     <KeyRound className="h-4 w-4 mr-2 text-blue-500" />
                     Check with administrator {ADMIN_EMAIL} for your OTP
                   </p>
                 </div>
-                
+
                 <Button 
                   type="submit" 
                   className="w-full" 
@@ -268,7 +251,7 @@ const Login = () => {
                     </>
                   ) : "Verify & Login"}
                 </Button>
-                
+
                 <div className="text-center mt-4">
                   <Button 
                     type="button" 
@@ -283,7 +266,7 @@ const Login = () => {
             </Form>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-xs text-center text-gray-500">
             For support, contact system administrator at {ADMIN_EMAIL}
