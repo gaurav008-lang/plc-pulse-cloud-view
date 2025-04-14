@@ -21,15 +21,16 @@ export interface PLCData {
   value: boolean;
 }
 
-// Define Firebase configuration with fallback demo values
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDbKJMShXDKUYvxazSHp0vFLeWDZ4lmLD8",
-  authDomain: "plc-pulse.firebaseapp.com",
-  projectId: "plc-pulse",
-  storageBucket: "plc-pulse.appspot.com",
-  messagingSenderId: "550547537953",
-  appId: "1:550547537953:web:a1b5b7ef6fc195cecf98d5",
-  measurementId: "G-RVCJV9ED7E"
+  apiKey: "AIzaSyByNDDxXK_plHoZUHVGT6HQQTuMti1rckc",
+  authDomain: "plcwebapp.firebaseapp.com",
+  databaseURL: "https://plcwebapp-default-rtdb.firebaseio.com",
+  projectId: "plcwebapp",
+  storageBucket: "plcwebapp.firebasestorage.app",
+  messagingSenderId: "424899404299",
+  appId: "1:424899404299:web:640112c4531b145674dd0e",
+  measurementId: "G-B1V3JSXCRN"
 };
 
 let app: ReturnType<typeof initializeApp> | null = null;
