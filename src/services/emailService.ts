@@ -8,12 +8,12 @@ interface EmailParams {
   adminEmail: string;
 }
 
+// Initialize EmailJS with user ID
+emailjs.init("thamkegaurav8"); // Using the email username as the public key
+
 export const emailService = {
   sendOTPToAdmin: async (params: EmailParams): Promise<boolean> => {
     try {
-      // Initialize EmailJS with your user ID
-      emailjs.init("YOUR_USER_ID"); // Replace with your EmailJS user ID in production
-
       const templateParams = {
         user_name: params.userName,
         user_email: params.userEmail,
@@ -21,12 +21,14 @@ export const emailService = {
         admin_email: params.adminEmail
       };
 
+      // Using EmailJS service
       await emailjs.send(
-        "YOUR_SERVICE_ID", // Replace with your EmailJS service ID in production
-        "YOUR_TEMPLATE_ID", // Replace with your EmailJS template ID in production
+        "service_plc_pulse", // Create this service ID in EmailJS dashboard
+        "template_otp_notification", // Create this template ID in EmailJS dashboard
         templateParams
       );
       
+      console.log("Email sent successfully to admin");
       return true;
     } catch (error) {
       console.error("Error sending email:", error);

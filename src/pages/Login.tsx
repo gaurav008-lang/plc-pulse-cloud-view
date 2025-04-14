@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, User, Loader2, KeyRound } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
-import { generateOTP } from '@/services/emailService';
+import { generateOTP, emailService } from '@/services/emailService';
 import { firebaseService } from '@/services/firebaseService';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -61,14 +61,21 @@ const Login = () => {
       // Store OTP in Firebase with email as key
       await firebaseService.saveOTP(values.email, otp);
       
-      // Display the OTP for demo purposes (in production this would be sent via email)
-      toast.info(`For demonstration purposes: OTP is ${otp}`);
-      toast.success("OTP has been sent to the admin for verification");
+      // Send OTP to admin via EmailJS
+      const emailResult = await emailService.sendOTPToAdmin({
+        userName: values.name,
+        userEmail: values.email,
+        otp: otp,
+        adminEmail: ADMIN_EMAIL
+      });
       
-      // In a real implementation, you would send an email to the admin here
-      // using the emailService.sendOTPToAdmin function
+      if (emailResult) {
+        toast.success("Access request sent to administrator");
+        setStep("otp");
+      } else {
+        toast.error("Failed to send access request. Please try again.");
+      }
       
-      setStep("otp");
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to generate OTP. Please try again.");
