@@ -8,8 +8,8 @@ interface EmailParams {
   adminEmail: string;
 }
 
-// Initialize EmailJS with user ID
-emailjs.init("BA0OAKO82o54LdK8u"); // Using the email username as the public key
+// Initialize EmailJS with your user ID
+emailjs.init("BA0OAKO82o54LdK8u"); 
 
 export const emailService = {
   sendOTPToAdmin: async (params: EmailParams): Promise<boolean> => {
@@ -20,18 +20,15 @@ export const emailService = {
         otp: params.otp,
         admin_email: params.adminEmail
       };
-
-      await emailjs.send(
-  "service_i2d8xmr",
-  "template_at6wvt9",
-  templateParams
-).catch(err => {
-  console.error("EmailJS error:", err);
-  throw err; // re-throw so outer catch block catches it
-});
       
+      // Using your email service credentials
+      const response = await emailjs.send(
+        "service_i2d8xmr", // Your EmailJS service ID
+        "template_at6wvt9", // Your EmailJS template ID
+        templateParams
+      );
       
-      console.log("Email sent successfully to admin");
+      console.log("Email sent successfully to admin", response);
       return true;
     } catch (error) {
       console.error("Error sending email:", error);

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +33,15 @@ const Login = () => {
   const [generatedOTP, setGeneratedOTP] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const app = firebaseService.initialize();
+    if (app) {
+      console.log("Firebase initialized in Login component");
+    } else {
+      console.error("Failed to initialize Firebase in Login component");
+    }
+  }, []);
+
   const detailsForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -58,10 +66,14 @@ const Login = () => {
       setUserName(values.name);
       setUserEmail(values.email);
       
-      // Store OTP in Firebase with email as key
+      firebaseService.initialize();
+      
+      console.log("Attempting to save OTP to Firebase:", values.email, otp);
+      
       await firebaseService.saveOTP(values.email, otp);
       
-      // Send OTP to admin via EmailJS
+      console.log("OTP saved successfully, now sending email");
+      
       const emailResult = await emailService.sendOTPToAdmin({
         userName: values.name,
         userEmail: values.email,
@@ -77,8 +89,8 @@ const Login = () => {
       }
       
     } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to generate OTP. Please try again.");
+      console.error("Error in handleRequestAccess:", error);
+      toast.error("Failed to process your request. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +103,6 @@ const Login = () => {
       const isValid = await firebaseService.verifyOTP(userEmail, values.otp);
       
       if (isValid) {
-        // Save login session
         localStorage.setItem('authUser', JSON.stringify({
           email: userEmail,
           name: userName,

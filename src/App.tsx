@@ -10,10 +10,18 @@ import NotFound from "./pages/NotFound";
 import InstallPWA from "./components/InstallPWA";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { useEffect } from "react";
+import { firebaseService } from "./services/firebaseService";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Initialize Firebase when the app starts
+  useEffect(() => {
+    firebaseService.initialize();
+    console.log("Firebase initialization attempted on app start");
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

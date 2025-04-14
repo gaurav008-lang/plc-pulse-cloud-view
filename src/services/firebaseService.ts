@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, onSnapshot } from 'firebase/firestore';
 
@@ -22,15 +21,15 @@ export interface PLCData {
   value: boolean;
 }
 
-// Define Firebase configuration using import.meta.env for Vite
+// Define Firebase configuration with fallback demo values
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "demo-project.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "demo-project",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "demo-project.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "000000000000",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:000000000000:web:0000000000000000000000",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-0000000000"
+  apiKey: "AIzaSyDbKJMShXDKUYvxazSHp0vFLeWDZ4lmLD8",
+  authDomain: "plc-pulse.firebaseapp.com",
+  projectId: "plc-pulse",
+  storageBucket: "plc-pulse.appspot.com",
+  messagingSenderId: "550547537953",
+  appId: "1:550547537953:web:a1b5b7ef6fc195cecf98d5",
+  measurementId: "G-RVCJV9ED7E"
 };
 
 let app: ReturnType<typeof initializeApp> | null = null;
@@ -47,13 +46,15 @@ export const firebaseService = {
         console.log("Firebase initialized successfully");
         
         // Set connection status to true for demo purposes
-        // In a real implementation, you would use a Firebase connection listener
         setTimeout(() => {
           isConnected = true;
           connectionListeners.forEach(listener => listener(true));
         }, 1000);
+        
+        return app;
       } catch (error) {
         console.error("Error initializing Firebase:", error);
+        return null;
       }
     }
     return app;
@@ -61,7 +62,14 @@ export const firebaseService = {
   
   // OTP-related functions
   saveOTP: async (email: string, otp: string): Promise<void> => {
-    if (!db) return Promise.reject(new Error("Firebase not initialized"));
+    if (!db) {
+      firebaseService.initialize();
+      db = getFirestore(app);
+      
+      if (!db) {
+        return Promise.reject(new Error("Firebase not initialized"));
+      }
+    }
     
     try {
       const sanitizedEmail = email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
@@ -89,7 +97,12 @@ export const firebaseService = {
   },
   
   verifyOTP: async (email: string, enteredOTP: string): Promise<boolean> => {
-    if (!db) return false;
+    if (!db) {
+      firebaseService.initialize();
+      db = getFirestore(app);
+      
+      if (!db) return false;
+    }
     
     try {
       const sanitizedEmail = email.replace(/\./g, '_dot_').replace(/@/g, '_at_');
@@ -136,8 +149,13 @@ export const firebaseService = {
   
   getSavedPLCConfigs: (callback: (configs: PLCConfig[]) => void): () => void => {
     if (!db) {
-      callback([]);
-      return () => {};
+      firebaseService.initialize();
+      db = getFirestore(app);
+      
+      if (!db) {
+        callback([]);
+        return () => {};
+      }
     }
     
     // For demo purposes, return some mock data
@@ -172,7 +190,12 @@ export const firebaseService = {
   },
   
   savePLCConfig: async (config: PLCConfig): Promise<void> => {
-    if (!db) return Promise.reject(new Error("Firebase not initialized"));
+    if (!db) {
+      firebaseService.initialize();
+      db = getFirestore(app);
+      
+      if (!db) return Promise.reject(new Error("Firebase not initialized"));
+    }
     
     try {
       const configWithTimestamp = {
@@ -194,7 +217,12 @@ export const firebaseService = {
   
   // Function for uploading PLC data
   uploadPLCData: async (data: PLCData): Promise<void> => {
-    if (!db) return;
+    if (!db) {
+      firebaseService.initialize();
+      db = getFirestore(app);
+      
+      if (!db) return;
+    }
     
     try {
       const dataRef = collection(db, 'plcData');
