@@ -59,6 +59,13 @@ const Login = () => {
     },
   });
 
+  // Reset OTP form when switching to OTP step
+  useEffect(() => {
+    if (step === "otp") {
+      otpForm.reset();
+    }
+  }, [step, otpForm]);
+
   const handleRequestAccess = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     
@@ -111,7 +118,9 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      console.log("Verifying OTP:", values.otp, "for email:", userEmail);
       const isValid = await firebaseService.verifyOTP(userEmail, values.otp);
+      console.log("OTP verification result:", isValid);
       
       if (isValid) {
         localStorage.setItem('authUser', JSON.stringify({
@@ -127,6 +136,7 @@ const Login = () => {
         toast.error("Invalid OTP. Please check with the administrator.");
       }
     } catch (error) {
+      console.error("Error verifying OTP:", error);
       toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -216,7 +226,14 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>One-Time Password</FormLabel>
                       <FormControl>
-                        <InputOTP maxLength={6} {...field}>
+                        <InputOTP 
+                          maxLength={6} 
+                          value={field.value} 
+                          onChange={(value) => {
+                            console.log("OTP input changed:", value);
+                            field.onChange(value);
+                          }}
+                        >
                           <InputOTPGroup>
                             <InputOTPSlot index={0} />
                             <InputOTPSlot index={1} />
@@ -242,7 +259,7 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading}
+                  disabled={isLoading || otpForm.getValues().otp.length !== 6}
                 >
                   {isLoading ? (
                     <>
