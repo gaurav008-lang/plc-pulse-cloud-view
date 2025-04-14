@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Initialize Firebase at component mount
     const app = firebaseService.initialize();
     if (app) {
       console.log("Firebase initialized in Login component");
@@ -61,19 +63,26 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      // Generate a 6-digit OTP
       const otp = generateOTP();
+      console.log("Generated OTP:", otp);
+      
+      // Save form values to state
       setGeneratedOTP(otp);
       setUserName(values.name);
       setUserEmail(values.email);
       
+      // Make sure Firebase is initialized
       firebaseService.initialize();
       
       console.log("Attempting to save OTP to Firebase:", values.email, otp);
       
+      // Save OTP to Firebase
       await firebaseService.saveOTP(values.email, otp);
       
       console.log("OTP saved successfully, now sending email");
       
+      // Send OTP to admin email
       const emailResult = await emailService.sendOTPToAdmin({
         userName: values.name,
         userEmail: values.email,
@@ -81,9 +90,11 @@ const Login = () => {
         adminEmail: ADMIN_EMAIL
       });
       
+      console.log("Email sending result:", emailResult);
+      
       if (emailResult) {
         toast.success("Access request sent to administrator");
-        setStep("otp");
+        setStep("otp");  // Move to OTP input step
       } else {
         toast.error("Failed to send access request. Please try again.");
       }

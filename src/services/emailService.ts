@@ -14,6 +14,8 @@ emailjs.init("BA0OAKO82o54LdK8u");
 export const emailService = {
   sendOTPToAdmin: async (params: EmailParams): Promise<boolean> => {
     try {
+      console.log("Attempting to send email with EmailJS...");
+      
       const templateParams = {
         user_name: params.userName,
         user_email: params.userEmail,
