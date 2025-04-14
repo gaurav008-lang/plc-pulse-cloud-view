@@ -9,7 +9,7 @@ interface EmailParams {
 }
 
 // Initialize EmailJS with user ID
-emailjs.init("thamkegaurav8"); // Using the email username as the public key
+emailjs.init("BA0OAKO82o54LdK8u"); // Using the email username as the public key
 
 export const emailService = {
   sendOTPToAdmin: async (params: EmailParams): Promise<boolean> => {
@@ -23,8 +23,8 @@ export const emailService = {
 
       // Using EmailJS service
       await emailjs.send(
-        "service_plc_pulse", // Create this service ID in EmailJS dashboard
-        "template_otp_notification", // Create this template ID in EmailJS dashboard
+        "service_i2d8xmr", // Create this service ID in EmailJS dashboard
+        "template_at6wvt9", // Create this template ID in EmailJS dashboard
         templateParams
       );
       
