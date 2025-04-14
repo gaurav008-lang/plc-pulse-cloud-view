@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Settings, Cpu, Database } from "lucide-react";
+import { Settings, Cpu, Database, LogOut, User } from "lucide-react";
 import PLCConfigForm, { PLCConfig } from "@/components/PLCConfigForm";
 import DataDisplay from "@/components/DataDisplay";
 import CloudStorage from "@/components/CloudStorage";
 import { socketService } from "@/services/socketService";
 import { firebaseService } from "@/services/firebaseService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PLCData {
   timestamp: string;
@@ -24,6 +25,7 @@ const Index = () => {
   const [currentData, setCurrentData] = useState<PLCData | null>(null);
   const [historicalData, setHistoricalData] = useState<PLCData[]>([]);
   const [plcConfig, setPlcConfig] = useState<PLCConfig | null>(null);
+  const { user, logout, isAdmin } = useAuth();
 
   // Initialize services
   useEffect(() => {
@@ -93,6 +95,12 @@ const Index = () => {
     socketService.disconnectFromPLC();
   };
 
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+  };
+
   // Get connection address display string
   const getConnectionAddress = () => {
     if (!plcConfig) return '';
@@ -107,9 +115,29 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="container mx-auto max-w-5xl">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-plc-blue mb-2">PLC Pulse Cloud View</h1>
-          <p className="text-gray-600">Real-time PLC monitoring dashboard</p>
+        <header className="mb-8 flex justify-between items-center">
+          <div className="text-center md:text-left">
+            <h1 className="text-3xl font-bold text-plc-blue mb-2">PLC Pulse Cloud View</h1>
+            <p className="text-gray-600">Real-time PLC monitoring dashboard</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden md:block text-right">
+              <p className="font-medium text-plc-blue">{user?.email}</p>
+              <p className="text-xs text-gray-500">
+                {isAdmin ? 'Administrator' : 'User'}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={handleLogout}
+            >
+              <User className="h-4 w-4 md:hidden" />
+              <span className="hidden md:inline">Log out</span>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

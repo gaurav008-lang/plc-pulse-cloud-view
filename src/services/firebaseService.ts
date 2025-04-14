@@ -1,6 +1,6 @@
 
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp } from "firebase/database";
+import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp, get } from "firebase/database";
 import { toast } from "sonner";
 
 interface PLCData {
@@ -22,6 +22,12 @@ export interface PLCConfig {
   enableLogging: boolean;
   createdAt?: number;
   id?: string;
+}
+
+interface OTPData {
+  code: string;
+  createdAt: number;
+  email: string;
 }
 
 const firebaseConfig = {
@@ -212,6 +218,71 @@ class FirebaseService {
     });
 
     return unsubscribe;
+  }
+
+  // Save OTP for a user
+  async saveOTP(email: string, otp: string): Promise<void> {
+    if (!this.initialized) {
+      throw new Error("Firebase not initialized");
+    }
+
+    try {
+      const otpData: OTPData = {
+        code: otp,
+        createdAt: Date.now(),
+        email: email
+      };
+      
+      // Use sanitized email as key (replace special characters)
+      const sanitizedEmail = email.replace(/[.#$[\]]/g, '_');
+      
+      const otpRef = ref(this.db, `otps/${sanitizedEmail}`);
+      await set(otpRef, otpData);
+      console.log("OTP saved for:", email);
+    } catch (error) {
+      console.error("Error saving OTP:", error);
+      throw error;
+    }
+  }
+
+  // Verify OTP for a user
+  async verifyOTP(email: string, otp: string): Promise<boolean> {
+    if (!this.initialized) {
+      throw new Error("Firebase not initialized");
+    }
+
+    try {
+      // Use sanitized email as key (replace special characters)
+      const sanitizedEmail = email.replace(/[.#$[\]]/g, '_');
+      
+      const otpRef = ref(this.db, `otps/${sanitizedEmail}`);
+      const snapshot = await get(otpRef);
+      
+      if (!snapshot.exists()) {
+        console.log("No OTP found for:", email);
+        return false;
+      }
+      
+      const otpData = snapshot.val() as OTPData;
+      
+      // Check if OTP matches and is not expired (valid for 10 minutes)
+      const isValid = 
+        otpData.code === otp && 
+        Date.now() - otpData.createdAt < 10 * 60 * 1000;
+      
+      if (isValid) {
+        // Delete the OTP after successful verification
+        await set(otpRef, null);
+        console.log("OTP verified successfully for:", email);
+      } else {
+        console.log("Invalid or expired OTP for:", email);
+      }
+      
+      return isValid;
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      return false;
+    }
   }
 }
 
