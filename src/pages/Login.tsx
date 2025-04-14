@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Card, CardContent, CardDescription, CardFooter,
-  CardHeader, CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,13 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { generateOTP, emailService } from '@/services/emailService';
 import { firebaseService } from '@/services/firebaseService';
-import {
-  InputOTP, InputOTPGroup, InputOTPSlot
-} from "@/components/ui/input-otp";
-import {
-  Form, FormControl, FormField,
-  FormItem, FormLabel, FormMessage
-} from "@/components/ui/form";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,7 +34,13 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    firebaseService.initialize();
+    // Initialize Firebase at component mount
+    const app = firebaseService.initialize();
+    if (app) {
+      console.log("Firebase initialized in Login component");
+    } else {
+      console.error("Failed to initialize Firebase in Login component");
+    }
   }, []);
 
   const detailsForm = useForm<z.infer<typeof loginSchema>>({
@@ -60,6 +58,7 @@ const Login = () => {
     },
   });
 
+  // Reset OTP form when switching to OTP step
   useEffect(() => {
     if (step === "otp") {
       otpForm.reset();
@@ -68,27 +67,44 @@ const Login = () => {
 
   const handleRequestAccess = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
+    
     try {
+      // Generate a 6-digit OTP
       const otp = generateOTP();
+      console.log("Generated OTP:", otp);
+      
+      // Save form values to state
       setGeneratedOTP(otp);
       setUserName(values.name);
       setUserEmail(values.email);
+      
+      // Make sure Firebase is initialized
       firebaseService.initialize();
+      
+      console.log("Attempting to save OTP to Firebase:", values.email, otp);
+      
+      // Save OTP to Firebase
       await firebaseService.saveOTP(values.email, otp);
-
+      
+      console.log("OTP saved successfully, now sending email");
+      
+      // Send OTP to admin email
       const emailResult = await emailService.sendOTPToAdmin({
         userName: values.name,
         userEmail: values.email,
         otp: otp,
         adminEmail: ADMIN_EMAIL
       });
-
+      
+      console.log("Email sending result:", emailResult);
+      
       if (emailResult) {
         toast.success("Access request sent to administrator");
-        setStep("otp");
+        setStep("otp");  // Move to OTP input step
       } else {
         toast.error("Failed to send access request. Please try again.");
       }
+      
     } catch (error) {
       console.error("Error in handleRequestAccess:", error);
       toast.error("Failed to process your request. Please try again.");
@@ -99,8 +115,12 @@ const Login = () => {
 
   const handleVerifyOTP = async (values: z.infer<typeof otpSchema>) => {
     setIsLoading(true);
+    
     try {
+      console.log("Verifying OTP:", values.otp, "for email:", userEmail);
       const isValid = await firebaseService.verifyOTP(userEmail, values.otp);
+      console.log("OTP verification result:", isValid);
+      
       if (isValid) {
         localStorage.setItem('authUser', JSON.stringify({
           email: userEmail,
@@ -108,6 +128,7 @@ const Login = () => {
           isAdmin: userEmail === ADMIN_EMAIL,
           loginTime: new Date().toString()
         }));
+        
         toast.success("Login successful! Welcome to PLC Pulse");
         navigate("/");
       } else {
@@ -127,12 +148,12 @@ const Login = () => {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold text-primary">PLC Pulse Access System</CardTitle>
           <CardDescription>
-            {step === "details"
-              ? "Enter your details to request access"
+            {step === "details" 
+              ? "Enter your details to request access" 
               : "Enter the OTP provided by the administrator"}
           </CardDescription>
         </CardHeader>
-
+        
         <CardContent>
           {step === "details" ? (
             <Form {...detailsForm}>
@@ -146,10 +167,10 @@ const Login = () => {
                       <div className="relative">
                         <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         <FormControl>
-                          <Input
-                            placeholder="Your full name"
-                            className="pl-10"
-                            {...field}
+                          <Input 
+                            placeholder="Your full name" 
+                            className="pl-10" 
+                            {...field} 
                           />
                         </FormControl>
                       </div>
@@ -167,11 +188,11 @@ const Login = () => {
                       <div className="relative">
                         <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                         <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="you@example.com"
-                            className="pl-10"
-                            {...field}
+                          <Input 
+                            type="email" 
+                            placeholder="you@example.com" 
+                            className="pl-10" 
+                            {...field} 
                           />
                         </FormControl>
                       </div>
@@ -179,15 +200,15 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-
-                <Button
-                  type="submit"
-                  className="w-full"
+                
+                <Button 
+                  type="submit" 
+                  className="w-full" 
                   disabled={isLoading}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
                       Requesting Access...
                     </>
                   ) : "Request Access"}
@@ -204,15 +225,21 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>One-Time Password</FormLabel>
                       <FormControl>
-                        <InputOTP
-                          maxLength={6}
-                          value={field.value}
-                          onChange={field.onChange}
+                        <InputOTP 
+                          maxLength={6} 
+                          value={field.value} 
+                          onChange={(value) => {
+                            console.log("OTP input changed:", value);
+                            field.onChange(value);
+                          }}
                         >
                           <InputOTPGroup>
-                            {[0, 1, 2, 3, 4, 5].map(i => (
-                              <InputOTPSlot key={i} index={i} />
-                            ))}
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
                           </InputOTPGroup>
                         </InputOTP>
                       </FormControl>
@@ -220,30 +247,30 @@ const Login = () => {
                     </FormItem>
                   )}
                 />
-
+                
                 <div className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md border border-blue-100 mb-4">
                   <p className="flex items-center">
                     <KeyRound className="h-4 w-4 mr-2 text-blue-500" />
                     Check with administrator {ADMIN_EMAIL} for your OTP
                   </p>
                 </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
+                
+                <Button 
+                  type="submit" 
+                  className="w-full" 
                   disabled={isLoading || otpForm.getValues().otp.length !== 6}
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
                       Verifying...
                     </>
                   ) : "Verify & Login"}
                 </Button>
-
+                
                 <div className="text-center mt-4">
-                  <Button
-                    type="button"
+                  <Button 
+                    type="button" 
                     variant="ghost"
                     onClick={() => setStep("details")}
                     className="text-xs"
@@ -255,7 +282,7 @@ const Login = () => {
             </Form>
           )}
         </CardContent>
-
+        
         <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-xs text-center text-gray-500">
             For support, contact system administrator at {ADMIN_EMAIL}
