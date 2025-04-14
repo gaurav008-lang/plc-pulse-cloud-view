@@ -21,12 +21,15 @@ export const emailService = {
         admin_email: params.adminEmail
       };
 
-      // Using EmailJS service
       await emailjs.send(
-        "service_i2d8xmr", // Create this service ID in EmailJS dashboard
-        "template_at6wvt9", // Create this template ID in EmailJS dashboard
-        templateParams
-      );
+  "service_i2d8xmr",
+  "template_at6wvt9",
+  templateParams
+).catch(err => {
+  console.error("EmailJS error:", err);
+  throw err; // re-throw so outer catch block catches it
+});
+      
       
       console.log("Email sent successfully to admin");
       return true;
