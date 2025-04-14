@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 
 interface AuthUser {
   email: string;
+  name?: string;
   isAdmin: boolean;
   loginTime: string;
 }

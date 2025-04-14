@@ -4,184 +4,243 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, User, Loader2, KeyRound } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { generateOTP } from '@/services/emailService';
 import { firebaseService } from '@/services/firebaseService';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const ADMIN_EMAIL = "gauravthamke100@gmail.com";
+
+const loginSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+});
+
+const otpSchema = z.object({
+  otp: z.string().length(6, { message: "OTP must be 6 digits." })
+});
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState<"details" | "otp">("details");
   const [isLoading, setIsLoading] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [generatedOTP, setGeneratedOTP] = useState("");
   const navigate = useNavigate();
-  
-  const ADMIN_EMAIL = "gauravthamke100@gmail.com";
 
-  const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  };
+  const detailsForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
 
-  const handleSendOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !email.includes('@')) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    
+  const otpForm = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
+    defaultValues: {
+      otp: "",
+    },
+  });
+
+  const handleRequestAccess = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
     
     try {
-      // Generate random 6-digit OTP
-      const generatedOTP = generateOTP();
+      const otp = generateOTP();
+      setGeneratedOTP(otp);
+      setUserName(values.name);
+      setUserEmail(values.email);
       
       // Store OTP in Firebase with email as key
-      await firebaseService.saveOTP(email, generatedOTP);
+      await firebaseService.saveOTP(values.email, otp);
       
-      // In a real app, you would send the OTP via email service
-      // For demonstration, we'll show it in a toast for the admin account
-      if (email === ADMIN_EMAIL) {
-        toast.info(`Your OTP is: ${generatedOTP}`);
-      } else {
-        toast.info("OTP sent to your email");
-      }
+      // Display the OTP for demo purposes (in production this would be sent via email)
+      toast.info(`For demonstration purposes: OTP is ${otp}`);
+      toast.success("OTP has been sent to the admin for verification");
       
-      setIsOtpSent(true);
-      setIsLoading(false);
+      // In a real implementation, you would send an email to the admin here
+      // using the emailService.sendOTPToAdmin function
+      
+      setStep("otp");
     } catch (error) {
-      toast.error("Failed to send OTP");
+      console.error("Error:", error);
+      toast.error("Failed to generate OTP. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!otp || otp.length !== 6) {
-      toast.error("Please enter a valid 6-digit OTP");
-      return;
-    }
-    
+  const handleVerifyOTP = async (values: z.infer<typeof otpSchema>) => {
     setIsLoading(true);
     
     try {
-      const isValid = await firebaseService.verifyOTP(email, otp);
+      const isValid = await firebaseService.verifyOTP(userEmail, values.otp);
       
       if (isValid) {
         // Save login session
         localStorage.setItem('authUser', JSON.stringify({
-          email,
-          isAdmin: email === ADMIN_EMAIL,
+          email: userEmail,
+          name: userName,
+          isAdmin: userEmail === ADMIN_EMAIL,
           loginTime: new Date().toString()
         }));
         
-        toast.success("Login successful");
+        toast.success("Login successful! Welcome to PLC Pulse");
         navigate("/");
       } else {
-        toast.error("Invalid OTP");
+        toast.error("Invalid OTP. Please check with the administrator.");
       }
     } catch (error) {
-      toast.error("Verification failed");
+      toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md shadow-lg animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+      <Card className="w-full max-w-md shadow-xl animate-fade-in">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold text-plc-blue">PLC Pulse Login</CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">PLC Pulse Access System</CardTitle>
           <CardDescription>
-            {isOtpSent 
-              ? "Enter the OTP sent to your email" 
-              : "Enter your email to receive an OTP"}
+            {step === "details" 
+              ? "Enter your details to request access" 
+              : "Enter the OTP provided by the administrator"}
           </CardDescription>
         </CardHeader>
+        
         <CardContent>
-          {!isOtpSent ? (
-            <form onSubmit={handleSendOTP} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="your.email@example.com" 
-                    className="pl-10" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                    Sending OTP
-                  </>
-                ) : "Send OTP"}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otp">One-Time Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                  <Input 
-                    id="otp" 
-                    type="text" 
-                    placeholder="123456" 
-                    className="pl-10" 
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    maxLength={6}
-                    required
-                  />
-                </div>
-                <p className="text-sm text-gray-500">
-                  We sent a 6-digit code to {email}
-                </p>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                    Verifying
-                  </>
-                ) : "Verify & Login"}
-              </Button>
-              
-              <div className="text-center mt-4">
+          {step === "details" ? (
+            <Form {...detailsForm}>
+              <form onSubmit={detailsForm.handleSubmit(handleRequestAccess)} className="space-y-4">
+                <FormField
+                  control={detailsForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <div className="relative">
+                        <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        <FormControl>
+                          <Input 
+                            placeholder="Your full name" 
+                            className="pl-10" 
+                            {...field} 
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={detailsForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="you@example.com" 
+                            className="pl-10" 
+                            {...field} 
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <Button 
-                  type="button" 
-                  variant="link" 
-                  onClick={() => setIsOtpSent(false)}
-                  className="text-xs"
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading}
                 >
-                  Change email or resend OTP
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                      Requesting Access...
+                    </>
+                  ) : "Request Access"}
                 </Button>
-              </div>
-            </form>
+              </form>
+            </Form>
+          ) : (
+            <Form {...otpForm}>
+              <form onSubmit={otpForm.handleSubmit(handleVerifyOTP)} className="space-y-4">
+                <FormField
+                  control={otpForm.control}
+                  name="otp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>One-Time Password</FormLabel>
+                      <FormControl>
+                        <InputOTP maxLength={6} {...field}>
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md border border-blue-100 mb-4">
+                  <p className="flex items-center">
+                    <KeyRound className="h-4 w-4 mr-2 text-blue-500" />
+                    Check with administrator {ADMIN_EMAIL} for your OTP
+                  </p>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                      Verifying...
+                    </>
+                  ) : "Verify & Login"}
+                </Button>
+                
+                <div className="text-center mt-4">
+                  <Button 
+                    type="button" 
+                    variant="ghost"
+                    onClick={() => setStep("details")}
+                    className="text-xs"
+                  >
+                    Back to request form
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
         </CardContent>
+        
         <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-xs text-center text-gray-500">
-            For support, contact your system administrator
+            For support, contact system administrator at {ADMIN_EMAIL}
           </p>
         </CardFooter>
       </Card>
