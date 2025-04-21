@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -125,20 +124,24 @@ const Login = () => {
       console.log("OTP verification result:", isValid);
       
       if (isValid) {
-        localStorage.setItem('authUser', JSON.stringify({
+        // Create user object for authentication context
+        const authUser = {
           email: userEmail,
           name: userName,
-          isAdmin: userEmail === ADMIN_EMAIL,
-          loginTime: new Date().toString()
-        }));
+          isAdmin: userEmail.endsWith("@admin.com"),
+          loginTime: new Date().toISOString()
+        };
         
-        toast.success("Login successful! Welcome to PLC Pulse");
-        navigate("/");
+        // Store auth data
+        localStorage.setItem('authUser', JSON.stringify(authUser));
+        
+        toast.success("Login successful!");
+        navigate('/', { replace: true });  // Ensure navigation to the main page
       } else {
-        toast.error("Invalid OTP. Please check with the administrator.");
+        toast.error("Invalid OTP. Please try again.");
       }
     } catch (error) {
-      console.error("Error verifying OTP:", error);
+      console.error("OTP verification error:", error);
       toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
