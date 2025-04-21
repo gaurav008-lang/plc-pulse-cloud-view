@@ -128,15 +128,17 @@ const Login = () => {
         const authUser = {
           email: userEmail,
           name: userName,
-          isAdmin: userEmail.endsWith("@admin.com"),
+          isAdmin: userEmail.toLowerCase().endsWith("@admin.com"),
           loginTime: new Date().toISOString()
         };
         
         // Store auth data
         localStorage.setItem('authUser', JSON.stringify(authUser));
         
-        toast.success("Login successful!");
-        navigate('/', { replace: true });  // Ensure navigation to the main page
+        toast.success("Login successful! Welcome to PLC Pulse Cloud View");
+        console.log("Navigation to Index page...");
+        // Force navigation to the main page with replace to prevent back navigation
+        navigate('/', { replace: true });
       } else {
         toast.error("Invalid OTP. Please try again.");
       }
@@ -147,8 +149,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
-  
-  // Handle manual OTP input change
+
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
     if (value.length <= 6) {

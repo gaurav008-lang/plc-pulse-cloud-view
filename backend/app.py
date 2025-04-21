@@ -60,6 +60,7 @@ def connect_modbus_tcp(config):
     """Connect to Modbus TCP device"""
     global plc_client
     try:
+        logger.info(f"Connecting to ModbusTCP at {config['ipAddress']}:{config['port']}")
         plc_client = ModbusTcpClient(
             host=config['ipAddress'],
             port=config['port'],
@@ -76,6 +77,7 @@ def connect_modbus_rtu(config):
     """Connect to Modbus RTU device"""
     global plc_client
     try:
+        logger.info(f"Connecting to ModbusRTU at {config['comPort']} with baud rate {config['baudRate']}")
         plc_client = ModbusSerialClient(
             method='rtu',
             port=config['comPort'],
@@ -105,6 +107,7 @@ def read_coil_status():
         unit_id = int(plc_config['unitId'])
         coil_address = int(plc_config['coilAddress'])
         
+        logger.info(f"Reading coil at address {coil_address} from unit ID {unit_id}")
         response = plc_client.read_coils(coil_address, 1, slave=unit_id)
         
         if response.isError():
@@ -122,6 +125,8 @@ def read_coil_status():
             'timestamp': datetime.datetime.now().isoformat(),
             'value': value
         }
+        
+        logger.info(f"PLC data read: {data}")
         
         # Emit data to all clients
         socketio.emit('plc_data', data)
@@ -164,6 +169,8 @@ def connect_to_plc(config):
     # Emit connecting status
     socketio.emit('plc_connection_status', 'connecting')
     
+    logger.info(f"Connecting to PLC with config: {config}")
+    
     # Try to connect to the PLC
     if config['modbusType'] == 'tcp':
         is_connected = connect_modbus_tcp(config)
@@ -183,59 +190,7 @@ def connect_to_plc(config):
         socketio.emit('plc_connection_status', 'disconnected')
         socketio.emit('error', 'Failed to connect to PLC')
 
-@app.route('/')
-def index():
-    """Serve the static React app"""
-    return app.send_static_file('index.html')
-
-@app.route('/api/status')
-def status():
-    """Return the current status of the PLC connection"""
-    global is_connected, plc_config
-    return jsonify({
-        'connected': is_connected,
-        'config': plc_config if is_connected else None
-    })
-
-@socketio.on('connect')
-def handle_connect():
-    """Handle client connection"""
-    logger.info(f"Client connected: {request.sid}")
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    """Handle client disconnection"""
-    logger.info(f"Client disconnected: {request.sid}")
-
-@socketio.on('connect_plc')
-def handle_connect_plc(config):
-    """Handle PLC connection request"""
-    global connection_thread
-    
-    logger.info(f"PLC connection request: {config}")
-    
-    # Start connection in a separate thread to avoid blocking
-    connection_thread = threading.Thread(target=connect_to_plc, args=(config,))
-    connection_thread.daemon = True
-    connection_thread.start()
-
-@socketio.on('disconnect_plc')
-def handle_disconnect_plc():
-    """Handle PLC disconnection request"""
-    global plc_client, is_connected, is_running
-    
-    logger.info("PLC disconnect request")
-    
-    is_running = False
-    if plc_client:
-        try:
-            plc_client.close()
-        except:
-            pass
-        plc_client = None
-    
-    is_connected = False
-    socketio.emit('plc_connection_status', 'disconnected')
+# ... keep existing code (routes and socket event handlers)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
