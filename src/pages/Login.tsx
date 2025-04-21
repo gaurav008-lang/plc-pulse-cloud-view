@@ -31,6 +31,7 @@ const Login = () => {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [generatedOTP, setGeneratedOTP] = useState("");
+  const [manualOtp, setManualOtp] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,10 +59,11 @@ const Login = () => {
     },
   });
 
-  // Reset OTP form when switching to OTP step
+  // Reset OTP form and manual input when switching to OTP step
   useEffect(() => {
     if (step === "otp") {
       otpForm.reset({ otp: "" });
+      setManualOtp("");
     }
   }, [step, otpForm]);
 
@@ -117,8 +119,9 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      console.log("Verifying OTP:", values.otp, "for email:", userEmail);
-      const isValid = await firebaseService.verifyOTP(userEmail, values.otp);
+      const otpToVerify = values.otp || manualOtp;
+      console.log("Verifying OTP:", otpToVerify, "for email:", userEmail);
+      const isValid = await firebaseService.verifyOTP(userEmail, otpToVerify);
       console.log("OTP verification result:", isValid);
       
       if (isValid) {
@@ -139,6 +142,15 @@ const Login = () => {
       toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  // Handle manual OTP input change
+  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value.length <= 6) {
+      setManualOtp(value);
+      otpForm.setValue("otp", value);
     }
   };
 
@@ -219,35 +231,25 @@ const Login = () => {
           ) : (
             <Form {...otpForm}>
               <form onSubmit={otpForm.handleSubmit(handleVerifyOTP)} className="space-y-4">
-                <FormField
-                  control={otpForm.control}
-                  name="otp"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>One-Time Password</FormLabel>
-                      <FormControl>
-                        <div className="flex justify-center">
-                          <Input
-                            id="otpInput"
-                            type="text"
-                            maxLength={6}
-                            className="text-center text-lg tracking-widest w-40"
-                            placeholder="000000"
-                            value={field.value}
-                            onChange={(e) => {
-                              // Only allow digits
-                              const value = e.target.value.replace(/[^0-9]/g, '');
-                              if (value.length <= 6) {
-                                field.onChange(value);
-                              }
-                            }}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <div>
+                  <FormLabel htmlFor="otpInput">One-Time Password</FormLabel>
+                  <div className="flex justify-center mt-2">
+                    <Input
+                      id="otpInput"
+                      type="text"
+                      maxLength={6}
+                      className="text-center text-lg tracking-widest w-40"
+                      placeholder="000000"
+                      value={manualOtp}
+                      onChange={handleOtpChange}
+                    />
+                  </div>
+                  {otpForm.formState.errors.otp && (
+                    <p className="text-sm text-red-500 mt-1 text-center">
+                      {otpForm.formState.errors.otp.message}
+                    </p>
                   )}
-                />
+                </div>
                 
                 <div className="text-sm text-gray-500 bg-blue-50 p-3 rounded-md border border-blue-100 mb-4">
                   <p className="flex items-center">
@@ -259,7 +261,7 @@ const Login = () => {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={isLoading || otpForm.getValues().otp.length !== 6}
+                  disabled={isLoading || manualOtp.length !== 6}
                 >
                   {isLoading ? (
                     <>
