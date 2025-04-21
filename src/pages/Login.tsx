@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { generateOTP, emailService } from '@/services/emailService';
 import { firebaseService } from '@/services/firebaseService';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -62,7 +61,7 @@ const Login = () => {
   // Reset OTP form when switching to OTP step
   useEffect(() => {
     if (step === "otp") {
-      otpForm.reset();
+      otpForm.reset({ otp: "" });
     }
   }, [step, otpForm]);
 
@@ -172,6 +171,7 @@ const Login = () => {
                             placeholder="Your full name" 
                             className="pl-10" 
                             {...field} 
+                            id="nameInput"
                           />
                         </FormControl>
                       </div>
@@ -228,6 +228,7 @@ const Login = () => {
                       <FormControl>
                         <div className="flex justify-center">
                           <Input
+                            id="otpInput"
                             type="text"
                             maxLength={6}
                             className="text-center text-lg tracking-widest w-40"
