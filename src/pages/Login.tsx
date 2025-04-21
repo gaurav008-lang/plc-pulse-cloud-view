@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -225,23 +226,22 @@ const Login = () => {
                     <FormItem>
                       <FormLabel>One-Time Password</FormLabel>
                       <FormControl>
-                        <InputOTP 
-                          maxLength={6} 
-                          value={field.value} 
-                          onChange={(value) => {
-                            console.log("OTP input changed:", value);
-                            field.onChange(value);
-                          }}
-                        >
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
+                        <div className="flex justify-center">
+                          <Input
+                            type="text"
+                            maxLength={6}
+                            className="text-center text-lg tracking-widest w-40"
+                            placeholder="000000"
+                            value={field.value}
+                            onChange={(e) => {
+                              // Only allow digits
+                              const value = e.target.value.replace(/[^0-9]/g, '');
+                              if (value.length <= 6) {
+                                field.onChange(value);
+                              }
+                            }}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
